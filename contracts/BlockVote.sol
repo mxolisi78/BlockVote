@@ -16,10 +16,13 @@ contract BlockVote {
 
     address public admin;
 
-    bool public electionStarted;
-    bool public electionEnded;
+string public electionName;
 
-    uint256 public candidateCount;
+bool public electionStarted;
+bool public electionEnded;
+
+uint256 public candidateCount;
+uint256 public totalVotes;
 
     mapping(uint256 => Candidate) public candidates;
     mapping(address => Voter) public voters;
@@ -50,9 +53,12 @@ contract BlockVote {
         _;
     }
 
-    constructor() {
-        admin = msg.sender;
-    }
+    constructor(
+    string memory _electionName
+) {
+    admin = msg.sender;
+    electionName = _electionName;
+}
 
     function addCandidate(
         string memory name
@@ -163,7 +169,9 @@ contract BlockVote {
 
         candidates[candidateId].voteCount++;
 
-        voters[msg.sender].hasVoted = true;
+voters[msg.sender].hasVoted = true;
+
+totalVotes++;
 
         emit VoteCast(
             msg.sender,

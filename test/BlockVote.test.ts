@@ -5,22 +5,27 @@ import { network } from "hardhat";
 describe("BlockVote", async function () {
 
   async function deployBlockVoteFixture() {
-    const { viem } = await network.connect();
+    const { viem } = await network.create();
 
-    const [admin, voter1, voter2, outsider] =
+    const [admin, voter1, voter2] =
       await viem.getWalletClients();
 
-    const blockVote =
-      await viem.deployContract("BlockVote");
+    const blockVote = await viem.deployContract(
+      "BlockVote",
+      ["Student Council Election 2026"]
+    );
 
     return {
       blockVote,
       admin,
       voter1,
       voter2,
-      outsider,
     };
   }
+
+  // ==========================================
+  // DEPLOYMENT
+  // ==========================================
 
   describe("Deployment", function () {
 
@@ -40,7 +45,26 @@ describe("BlockVote", async function () {
       );
     });
 
+    it("should set the election name", async function () {
+
+      const {
+        blockVote,
+      } = await deployBlockVoteFixture();
+
+      const name =
+        await blockVote.read.electionName();
+
+      assert.equal(
+        name,
+        "Student Council Election 2026"
+      );
+    });
+
   });
+
+  // ==========================================
+  // CANDIDATES
+  // ==========================================
 
   describe("Candidates", function () {
 
@@ -48,11 +72,15 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
       const candidate =
         await blockVote.read.getCandidate([1n]);
@@ -66,15 +94,22 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.addCandidate([
-        "Candidate B",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate B"],
+        {
+          account: admin.account,
+        }
+      );
 
       const count =
         await blockVote.read.candidateCount();
@@ -82,7 +117,58 @@ describe("BlockVote", async function () {
       assert.equal(count, 2n);
     });
 
+    it("should prevent non-admin from adding a candidate", async function () {
+
+  const {
+    blockVote,
+    voter1,
+  } = await deployBlockVoteFixture();
+
+  await assert.rejects(
+    blockVote.write.addCandidate(
+      ["Unauthorized Candidate"],
+      {
+        account: voter1.account,
+      }
+    ),
+    /Only admin can perform this action/
+  );
+});
+
+it("should prevent adding candidates after election starts", async function () {
+
+  const {
+    blockVote,
+    admin,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await blockVote.write.startElection({
+    account: admin.account,
   });
+
+  await assert.rejects(
+    blockVote.write.addCandidate(
+      ["Candidate B"],
+      {
+        account: admin.account,
+      }
+    ),
+    /Election already started/
+  );
+});
+
+  });
+
+  // ==========================================
+  // VOTER REGISTRATION
+  // ==========================================
 
   describe("Voter Registration", function () {
 
@@ -90,12 +176,16 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
       const status =
         await blockVote.read.getVoterStatus([
@@ -110,22 +200,52 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
       await assert.rejects(
-        blockVote.write.registerVoter([
-          voter1.account.address,
-        ]),
+        blockVote.write.registerVoter(
+          [voter1.account.address],
+          {
+            account: admin.account,
+          }
+        ),
         /Voter already registered/
       );
     });
 
+    it("should prevent non-admin from registering a voter", async function () {
+
+  const {
+    blockVote,
+    voter1,
+    voter2,
+  } = await deployBlockVoteFixture();
+
+  await assert.rejects(
+    blockVote.write.registerVoter(
+      [voter2.account.address],
+      {
+        account: voter1.account,
+      }
+    ),
+    /Only admin can perform this action/
+  );
+});
+
   });
+
+  // ==========================================
+  // ELECTION
+  // ==========================================
 
   describe("Election", function () {
 
@@ -133,13 +253,19 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
       const started =
         await blockVote.read.electionStarted();
@@ -151,15 +277,45 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
       } = await deployBlockVoteFixture();
 
       await assert.rejects(
-        blockVote.write.startElection(),
+        blockVote.write.startElection({
+          account: admin.account,
+        }),
         /Add candidates first/
       );
     });
 
+    it("should prevent non-admin from starting the election", async function () {
+
+  const {
+    blockVote,
+    admin,
+    voter1,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await assert.rejects(
+    blockVote.write.startElection({
+      account: voter1.account,
+    }),
+    /Only admin can perform this action/
+  );
+});
+
   });
+
+  // ==========================================
+  // VOTING
+  // ==========================================
 
   describe("Voting", function () {
 
@@ -167,18 +323,27 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
       await blockVote.write.vote(
         [1n],
@@ -193,22 +358,70 @@ describe("BlockVote", async function () {
       assert.equal(candidate[2], 1n);
     });
 
+    it("should increase total votes after voting", async function () {
+
+      const {
+        blockVote,
+        admin,
+        voter1,
+      } = await deployBlockVoteFixture();
+
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
+
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
+
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
+
+      await blockVote.write.vote(
+        [1n],
+        {
+          account: voter1.account,
+        }
+      );
+
+      const totalVotes =
+        await blockVote.read.totalVotes();
+
+      assert.equal(totalVotes, 1n);
+    });
+
     it("should prevent a voter from voting twice", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
       await blockVote.write.vote(
         [1n],
@@ -232,20 +445,26 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
-        outsider,
+        admin,
+        voter2,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
       await assert.rejects(
         blockVote.write.vote(
           [1n],
           {
-            account: outsider.account,
+            account: voter2.account,
           }
         ),
         /You are not a registered voter/
@@ -256,18 +475,27 @@ describe("BlockVote", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
       await assert.rejects(
         blockVote.write.vote(
@@ -282,26 +510,41 @@ describe("BlockVote", async function () {
 
   });
 
+  // ==========================================
+  // ENDING ELECTION
+  // ==========================================
+
   describe("Ending Election", function () {
 
     it("should prevent voting after election ends", async function () {
 
       const {
         blockVote,
+        admin,
         voter1,
       } = await deployBlockVoteFixture();
 
-      await blockVote.write.addCandidate([
-        "Candidate A",
-      ]);
+      await blockVote.write.addCandidate(
+        ["Candidate A"],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.registerVoter([
-        voter1.account.address,
-      ]);
+      await blockVote.write.registerVoter(
+        [voter1.account.address],
+        {
+          account: admin.account,
+        }
+      );
 
-      await blockVote.write.startElection();
+      await blockVote.write.startElection({
+        account: admin.account,
+      });
 
-      await blockVote.write.endElection();
+      await blockVote.write.endElection({
+        account: admin.account,
+      });
 
       await assert.rejects(
         blockVote.write.vote(
@@ -313,6 +556,113 @@ describe("BlockVote", async function () {
         /Election has ended/
       );
     });
+
+    it("should prevent non-admin from ending the election", async function () {
+
+  const {
+    blockVote,
+    admin,
+    voter1,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await blockVote.write.startElection({
+    account: admin.account,
+  });
+
+  await assert.rejects(
+    blockVote.write.endElection({
+      account: voter1.account,
+    }),
+    /Only admin can perform this action/
+  );
+});
+
+it("should prevent ending the election before it starts", async function () {
+
+  const {
+    blockVote,
+    admin,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await assert.rejects(
+    blockVote.write.endElection({
+      account: admin.account,
+    }),
+    /Election has not started/
+  );
+});
+
+it("should prevent starting the election twice", async function () {
+
+  const {
+    blockVote,
+    admin,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await blockVote.write.startElection({
+    account: admin.account,
+  });
+
+  await assert.rejects(
+    blockVote.write.startElection({
+      account: admin.account,
+    }),
+    /Election already started/
+  );
+});
+
+it("should prevent ending the election twice", async function () {
+
+  const {
+    blockVote,
+    admin,
+  } = await deployBlockVoteFixture();
+
+  await blockVote.write.addCandidate(
+    ["Candidate A"],
+    {
+      account: admin.account,
+    }
+  );
+
+  await blockVote.write.startElection({
+    account: admin.account,
+  });
+
+  await blockVote.write.endElection({
+    account: admin.account,
+  });
+
+  await assert.rejects(
+    blockVote.write.endElection({
+      account: admin.account,
+    }),
+    /Election already ended/
+  );
+});
+
+
 
   });
 
