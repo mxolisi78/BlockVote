@@ -174,6 +174,78 @@ export async function castVote(
   return hash;
 }
 
+// ---------- Admin write helpers ----------
+
+export async function adminAddCandidate(
+  adminAddress: Address,
+  name: string
+): Promise<`0x${string}`> {
+  await ensureHardhatNetwork();
+  const wallet = getWalletClient(adminAddress);
+  return await wallet.writeContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "addCandidate",
+    args: [name],
+    chain: hardhat,
+    account: adminAddress,
+  });
+}
+
+export async function adminRegisterVoter(
+  adminAddress: Address,
+  voter: Address
+): Promise<`0x${string}`> {
+  await ensureHardhatNetwork();
+  const wallet = getWalletClient(adminAddress);
+  return await wallet.writeContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "registerVoter",
+    args: [voter],
+    chain: hardhat,
+    account: adminAddress,
+  });
+}
+
+export async function adminStartElection(
+  adminAddress: Address
+): Promise<`0x${string}`> {
+  await ensureHardhatNetwork();
+  const wallet = getWalletClient(adminAddress);
+  return await wallet.writeContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "startElection",
+    args: [],
+    chain: hardhat,
+    account: adminAddress,
+  });
+}
+
+export async function adminEndElection(
+  adminAddress: Address
+): Promise<`0x${string}`> {
+  await ensureHardhatNetwork();
+  const wallet = getWalletClient(adminAddress);
+  return await wallet.writeContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "endElection",
+    args: [],
+    chain: hardhat,
+    account: adminAddress,
+  });
+}
+
+export async function readAdmin(): Promise<Address> {
+  return (await getPublicClient().readContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "admin",
+  })) as Address;
+}
+
 declare global {
   interface Window {
     ethereum?: any;

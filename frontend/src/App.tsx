@@ -11,9 +11,11 @@ import {
   readCandidates,
   readVoterStatus,
   castVote,
+  readAdmin,
   type Candidate,
 } from "./lib/blockvote";
 import { CandidateCard } from "./components/CandidateCard";
+import { AdminPanel } from "./components/AdminPanel";
 
 type ElectionState = {
   started: boolean;
@@ -35,7 +37,10 @@ function App() {
   const [voter, setVoter] = useState({ registered: false, hasVoted: false });
   const [votingId, setVotingId] = useState<bigint | null>(null);
 
-  // Load chain data
+  const [tab, setTab] = useState<"vote" | "admin">("vote");
+  const [adminAddress, setAdminAddress] = useState<string | null>(null);
+
+  // ---------- Load chain data ----------
   const refreshChainData = useCallback(
     async (viewer?: string | null) => {
       try {
@@ -54,8 +59,9 @@ function App() {
           setVoter(vs);
           setBalance(await getBalance(who));
         }
+
+        setAdminAddress(await readAdmin());
       } catch (e) {
-        // Ignore initial errors before wallet connects
         console.warn(e);
       }
     },
@@ -74,6 +80,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ---------- Connect ----------
   async function handleConnect() {
     setError(null);
     setNotice(null);
@@ -90,6 +97,7 @@ function App() {
     }
   }
 
+  // ---------- Vote ----------
   async function handleVote(candidateId: bigint) {
     if (!address) {
       setError("Connect your wallet first");
@@ -104,7 +112,6 @@ function App() {
         `Transaction sent: ${hash.slice(0, 10)}...${hash.slice(-6)} — waiting for confirmation...`
       );
 
-      // Poll for a few seconds until the state updates
       for (let i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 1000));
         const vs = await readVoterStatus(address as `0x${string}`);
@@ -138,8 +145,12 @@ function App() {
     state?.started === true &&
     state?.ended === false;
 
-  // ---------- UI ----------
+  const isAdmin =
+    !!address &&
+    !!adminAddress &&
+    address.toLowerCase() === adminAddress.toLowerCase();
 
+  // ---------- UI ----------
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -174,6 +185,28 @@ function App() {
           {electionName || "Loading..."} · Ethereum Sepolia (local)
         </p>
 
+        {/* Tabs */}
+        <div style={styles.tabs}>
+          <button
+            style={{
+              ...styles.tab,
+              ...(tab === "vote" ? styles.tabActive : {}),
+            }}
+            onClick={() => setTab("vote")}
+          >
+            🗳 Vote
+          </button>
+          <button
+            style={{
+              ...styles.tab,
+              ...(tab === "admin" ? styles.tabActive : {}),
+            }}
+            onClick={() => setTab("admin")}
+          >
+            🛠 Admin
+          </button>
+        </div>
+
         {!isMetaMaskInstalled() && (
           <div style={styles.warnBox}>
             MetaMask is not installed. Install it from{" "}
@@ -204,7 +237,11 @@ function App() {
                     : "NOT STARTED"
               }
               color={
-                state.ended ? "#a78bfa" : state.started ? "#4ade80" : "#8a8aa3"
+                state.ended
+                  ? "#a78bfa"
+                  : state.started
+                    ? "#4ade80"
+                    : "#8a8aa3"
               }
             />
             <StatusBadge
@@ -236,24 +273,40 @@ function App() {
           </div>
         )}
 
-        <div style={styles.list}>
-          {candidates.length === 0 && state && state.candidateCount === 0 && (
-            <div style={styles.empty}>
-              No candidates yet. Admin must add candidates.
-            </div>
-          )}
+        {tab === "vote" && (
+          <div style={styles.list}>
+            {candidates.length === 0 &&
+              state &&
+              state.candidateCount === 0 && (
+                <div style={styles.empty}>
+                  No candidates yet. Admin must add candidates.
+                </div>
+              )}
 
-          {candidates.map((c) => (
-            <CandidateCard
-              key={c.id.toString()}
-              candidate={c}
-              canVote={canVote}
-              voting={votingId === c.id}
-              onVote={handleVote}
-              totalVotes={state?.totalVotes ?? 0n}
-            />
-          ))}
-        </div>
+            {candidates.map((c) => (
+              <CandidateCard
+                key={c.id.toString()}
+                candidate={c}
+                canVote={canVote}
+                voting={votingId === c.id}
+                onVote={handleVote}
+                totalVotes={state?.totalVotes ?? 0n}
+              />
+            ))}
+          </div>
+        )}
+
+        {tab === "admin" && (
+          <AdminPanel
+            address={address}
+            isAdmin={isAdmin}
+            state={state}
+            candidates={candidates}
+            onRefresh={() => refreshChainData(address)}
+            setNotice={setNotice}
+            setError={setError}
+          />
+        )}
       </main>
     </div>
   );
@@ -336,6 +389,30 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#8a8aa3",
     marginTop: 8,
     marginBottom: 32,
+  },
+  tabs: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 24,
+    background: "#12121a",
+    border: "1px solid #26263a",
+    borderRadius: 10,
+    padding: 6,
+  },
+  tab: {
+    flex: 1,
+    padding: "10px 16px",
+    background: "transparent",
+    color: "#8a8aa3",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 14,
+  },
+  tabActive: {
+    background: "#7c5cff",
+    color: "#fff",
   },
   warnBox: {
     background: "#3b2c0f",
