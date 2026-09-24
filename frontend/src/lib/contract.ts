@@ -1,7 +1,7 @@
 import abi from "./contract-abi.json";
 
 // Local Hardhat:   0x5FbDB2315678afecb367f032d93F642f64180aa3
-// Sepolia:         0xb12166Fe060BAf4eBB17462091c6eFed7cA1ADFF
+// Sepolia:         0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7
 export const CONTRACT_ADDRESS =
   "0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7" as `0x${string}`;
 
@@ -13,7 +13,7 @@ export const HARDHAT_CHAIN_ID_HEX = "0x7a69";
 // Sepolia (chain 11155111)
 export const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
 
-// Legacy export — kept so older files don't break
+// Legacy export
 export const HARDHAT_NETWORK_PARAMS = {
   chainId: HARDHAT_CHAIN_ID_HEX,
   chainName: "Hardhat Local",
