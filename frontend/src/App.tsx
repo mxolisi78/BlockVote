@@ -182,7 +182,7 @@ function App() {
       <main style={styles.main}>
         <h1 style={styles.title}>Blockchain Voting Platform</h1>
         <p style={styles.subtitle}>
-          {electionName || "Loading..."} · Ethereum Sepolia (local)
+          {electionName || "Loading..."} · Ethereum Sepolia
         </p>
 
         {/* Tabs */}

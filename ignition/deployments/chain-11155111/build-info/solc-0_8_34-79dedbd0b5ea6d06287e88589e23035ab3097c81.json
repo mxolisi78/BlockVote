@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-79dedbd0b5ea6d06287e88589e23035ab3097c81",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.17.0"
+  },
+  "userSourceNameMap": {
+    "contracts/BlockVote.sol": "project/contracts/BlockVote.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/BlockVote.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.34;\r\n\r\ncontract BlockVote {\r\n\r\n    struct Candidate {\r\n        uint256 id;\r\n        string name;\r\n        uint256 voteCount;\r\n    }\r\n\r\n    struct Voter {\r\n        bool registered;\r\n        bool hasVoted;\r\n    }\r\n\r\n    address public admin;\r\n\r\nstring public electionName;\r\n\r\nbool public electionStarted;\r\nbool public electionEnded;\r\n\r\nuint256 public candidateCount;\r\nuint256 public totalVotes;\r\n\r\n    mapping(uint256 => Candidate) public candidates;\r\n    mapping(address => Voter) public voters;\r\n\r\n    event CandidateAdded(\r\n        uint256 indexed candidateId,\r\n        string name\r\n    );\r\n\r\n    event VoterRegistered(\r\n        address indexed voter\r\n    );\r\n\r\n    event ElectionStarted();\r\n\r\n    event ElectionEnded();\r\n\r\n    event VoteCast(\r\n        address indexed voter,\r\n        uint256 indexed candidateId\r\n    );\r\n\r\n    modifier onlyAdmin() {\r\n        require(\r\n            msg.sender == admin,\r\n            \"Only admin can perform this action\"\r\n        );\r\n        _;\r\n    }\r\n\r\n    constructor(\r\n    string memory _electionName\r\n) {\r\n    admin = msg.sender;\r\n    electionName = _electionName;\r\n}\r\n\r\n    function addCandidate(\r\n        string memory name\r\n    ) public onlyAdmin {\r\n\r\n        require(\r\n            !electionStarted,\r\n            \"Election already started\"\r\n        );\r\n\r\n        require(\r\n            bytes(name).length > 0,\r\n            \"Candidate name cannot be empty\"\r\n        );\r\n\r\n        candidateCount++;\r\n\r\n        candidates[candidateCount] = Candidate({\r\n            id: candidateCount,\r\n            name: name,\r\n            voteCount: 0\r\n        });\r\n\r\n        emit CandidateAdded(\r\n            candidateCount,\r\n            name\r\n        );\r\n    }\r\n\r\n    function registerVoter(\r\n        address voter\r\n    ) public onlyAdmin {\r\n\r\n        require(\r\n            !electionStarted,\r\n            \"Election already started\"\r\n        );\r\n\r\n        require(\r\n            voter != address(0),\r\n            \"Invalid voter address\"\r\n        );\r\n\r\n        require(\r\n            !voters[voter].registered,\r\n            \"Voter already registered\"\r\n        );\r\n\r\n        voters[voter] = Voter({\r\n            registered: true,\r\n            hasVoted: false\r\n        });\r\n\r\n        emit VoterRegistered(voter);\r\n    }\r\n\r\n    function startElection() public onlyAdmin {\r\n\r\n        require(\r\n            !electionStarted,\r\n            \"Election already started\"\r\n        );\r\n\r\n        require(\r\n            !electionEnded,\r\n            \"Election has already ended\"\r\n        );\r\n\r\n        require(\r\n            candidateCount > 0,\r\n            \"Add candidates first\"\r\n        );\r\n\r\n        electionStarted = true;\r\n\r\n        emit ElectionStarted();\r\n    }\r\n\r\n    function vote(\r\n        uint256 candidateId\r\n    ) public {\r\n\r\n        require(\r\n            electionStarted,\r\n            \"Election has not started\"\r\n        );\r\n\r\n        require(\r\n            !electionEnded,\r\n            \"Election has ended\"\r\n        );\r\n\r\n        require(\r\n            voters[msg.sender].registered,\r\n            \"You are not a registered voter\"\r\n        );\r\n\r\n        require(\r\n            !voters[msg.sender].hasVoted,\r\n            \"You have already voted\"\r\n        );\r\n\r\n        require(\r\n            candidateId > 0 &&\r\n            candidateId <= candidateCount,\r\n            \"Invalid candidate\"\r\n        );\r\n\r\n        candidates[candidateId].voteCount++;\r\n\r\nvoters[msg.sender].hasVoted = true;\r\n\r\ntotalVotes++;\r\n\r\n        emit VoteCast(\r\n            msg.sender,\r\n            candidateId\r\n        );\r\n    }\r\n\r\n    function endElection() public onlyAdmin {\r\n\r\n        require(\r\n            electionStarted,\r\n            \"Election has not started\"\r\n        );\r\n\r\n        require(\r\n            !electionEnded,\r\n            \"Election already ended\"\r\n        );\r\n\r\n        electionEnded = true;\r\n\r\n        emit ElectionEnded();\r\n    }\r\n\r\n    function getCandidate(\r\n        uint256 candidateId\r\n    )\r\n        public\r\n        view\r\n        returns (\r\n            uint256 id,\r\n            string memory name,\r\n            uint256 voteCount\r\n        )\r\n    {\r\n        Candidate memory candidate =\r\n            candidates[candidateId];\r\n\r\n        return (\r\n            candidate.id,\r\n            candidate.name,\r\n            candidate.voteCount\r\n        );\r\n    }\r\n\r\n    function getVoterStatus(\r\n        address voter\r\n    )\r\n        public\r\n        view\r\n        returns (\r\n            bool registered,\r\n            bool hasVoted\r\n        )\r\n    {\r\n        Voter memory voterData = voters[voter];\r\n\r\n        return (\r\n            voterData.registered,\r\n            voterData.hasVoted\r\n        );\r\n    }\r\n}"
+      }
+    }
+  }
+}

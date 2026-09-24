@@ -6,12 +6,11 @@ import {
   type Address,
   type PublicClient,
 } from "viem";
-import { hardhat } from "viem/chains";
+import { sepolia } from "viem/chains";
 import {
   CONTRACT_ADDRESS,
   CONTRACT_ABI,
-  HARDHAT_CHAIN_ID_HEX,
-  HARDHAT_NETWORK_PARAMS,
+  SEPOLIA_CHAIN_ID_HEX,
 } from "./contract";
 
 // ---------- Public client (read-only) ----------
@@ -21,8 +20,8 @@ let publicClientInstance: PublicClient | null = null;
 export function getPublicClient(): PublicClient {
   if (!publicClientInstance) {
     publicClientInstance = createPublicClient({
-      chain: hardhat,
-      transport: http("http://127.0.0.1:8545"),
+      chain: sepolia,
+      transport: http("https://ethereum-sepolia-rpc.publicnode.com"),
     }) as PublicClient;
   }
   return publicClientInstance;
@@ -123,27 +122,40 @@ export function getWalletClient(address: Address) {
   if (!window.ethereum) throw new Error("MetaMask not installed");
   return createWalletClient({
     account: address,
-    chain: hardhat,
+    chain: sepolia,
     transport: custom(window.ethereum),
   });
 }
 
 /**
- * Ensure MetaMask is on Hardhat Local. Add the chain if needed.
+ * Ensure MetaMask is on Sepolia. If not, ask MetaMask to switch.
  */
-export async function ensureHardhatNetwork(): Promise<void> {
+export async function ensureSepoliaNetwork(): Promise<void> {
   if (!window.ethereum) throw new Error("MetaMask not installed");
 
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: HARDHAT_CHAIN_ID_HEX }],
+      params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
     });
   } catch (err: any) {
+    // 4902 = chain not added to MetaMask
     if (err?.code === 4902) {
       await window.ethereum.request({
         method: "wallet_addEthereumChain",
-        params: [HARDHAT_NETWORK_PARAMS],
+        params: [
+          {
+            chainId: SEPOLIA_CHAIN_ID_HEX,
+            chainName: "Sepolia",
+            nativeCurrency: {
+              name: "SepoliaETH",
+              symbol: "ETH",
+              decimals: 18,
+            },
+            rpcUrls: ["https://ethereum-sepolia-rpc.publicnode.com"],
+            blockExplorerUrls: ["https://sepolia.etherscan.io"],
+          },
+        ],
       });
     } else {
       throw err;
@@ -158,7 +170,7 @@ export async function castVote(
   address: Address,
   candidateId: bigint
 ): Promise<`0x${string}`> {
-  await ensureHardhatNetwork();
+  await ensureSepoliaNetwork();
 
   const wallet = getWalletClient(address);
 
@@ -167,7 +179,7 @@ export async function castVote(
     abi: CONTRACT_ABI,
     functionName: "vote",
     args: [candidateId],
-    chain: hardhat,
+    chain: sepolia,
     account: address,
   });
 
@@ -180,14 +192,14 @@ export async function adminAddCandidate(
   adminAddress: Address,
   name: string
 ): Promise<`0x${string}`> {
-  await ensureHardhatNetwork();
+  await ensureSepoliaNetwork();
   const wallet = getWalletClient(adminAddress);
   return await wallet.writeContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: "addCandidate",
     args: [name],
-    chain: hardhat,
+    chain: sepolia,
     account: adminAddress,
   });
 }
@@ -196,14 +208,14 @@ export async function adminRegisterVoter(
   adminAddress: Address,
   voter: Address
 ): Promise<`0x${string}`> {
-  await ensureHardhatNetwork();
+  await ensureSepoliaNetwork();
   const wallet = getWalletClient(adminAddress);
   return await wallet.writeContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: "registerVoter",
     args: [voter],
-    chain: hardhat,
+    chain: sepolia,
     account: adminAddress,
   });
 }
@@ -211,14 +223,14 @@ export async function adminRegisterVoter(
 export async function adminStartElection(
   adminAddress: Address
 ): Promise<`0x${string}`> {
-  await ensureHardhatNetwork();
+  await ensureSepoliaNetwork();
   const wallet = getWalletClient(adminAddress);
   return await wallet.writeContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: "startElection",
     args: [],
-    chain: hardhat,
+    chain: sepolia,
     account: adminAddress,
   });
 }
@@ -226,14 +238,14 @@ export async function adminStartElection(
 export async function adminEndElection(
   adminAddress: Address
 ): Promise<`0x${string}`> {
-  await ensureHardhatNetwork();
+  await ensureSepoliaNetwork();
   const wallet = getWalletClient(adminAddress);
   return await wallet.writeContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: "endElection",
     args: [],
-    chain: hardhat,
+    chain: sepolia,
     account: adminAddress,
   });
 }

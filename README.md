@@ -1,57 +1,288 @@
-# Sample Hardhat 3 Project (`node:test` and `viem`)
+# 🗳️ BlockVote — Blockchain-Based Voting DApp
 
-This project showcases a Hardhat 3 project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+A decentralized voting application built on Ethereum. Votes are recorded as immutable transactions on the blockchain, election rules are enforced by a smart contract, and results are publicly auditable.
 
-To learn more about Hardhat 3, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3](https://hardhat.org/hardhat3-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+**🌐 Live on Sepolia Testnet** · **📜 Verified on Etherscan** · **⚛️ React + Solidity**
 
-## Project Overview
+---
 
-This example project includes:
+## 📌 Contract Information
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+| | |
+|---|---|
+| **Network** | Ethereum Sepolia Testnet |
+| **Contract Address** | [`0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7`](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7) |
+| **Verified Source** | [Etherscan →](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7#code) |
+| **Read Contract** | [Etherscan →](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7#readContract) |
+| **Deployer / Admin** | `0x9aDcEdA839B11dc336fb65102F30E7f0f74C5179` |
+| **Solidity Version** | 0.8.34 |
+| **License** | MIT |
 
-## Usage
+---
 
-### Running Tests
+## 🎯 What It Does
 
-To run all the tests in the project, execute the following command:
+BlockVote lets an administrator run a transparent on-chain election:
 
-```shell
+- Admin **adds candidates** before voting starts
+- Admin **registers eligible voters** by wallet address
+- Admin **starts** and **ends** the election
+- Registered voters **cast exactly one vote** from their MetaMask wallet
+- Anyone can **read candidates and vote counts** directly from Etherscan
+
+**Every rule is enforced by the smart contract.** Not by the server, not by the UI — by the code running on Ethereum.
+
+---
+
+## 🔐 Security Features
+
+| Feature | How |
+|---------|-----|
+| **One-wallet-one-vote** | `hasVoted[address]` flag set on-chain after voting |
+| **Admin-only actions** | `modifier onlyAdmin()` — reverts for non-admin |
+| **No voting before start** | `require(electionStarted)` check |
+| **No voting after end** | `require(!electionEnded)` check |
+| **No duplicate voters** | `require(!voters[voter].registered)` check |
+| **No invalid candidates** | `require(candidateId > 0 && candidateId <= candidateCount)` |
+| **No adding candidates after start** | `require(!electionStarted)` in `addCandidate` |
+| **No registration after start** | `require(!electionStarted)` in `registerVoter` |
+
+All rules are also covered by **22 automated tests** (see below).
+
+---
+
+## 🧱 Tech Stack
+
+**Blockchain:**
+- Solidity `0.8.34`
+- Hardhat 3 (development, testing, deployment)
+- Hardhat Ignition (deterministic deployments)
+- viem (TypeScript Ethereum client)
+- Ethereum Sepolia Testnet
+
+**Frontend:**
+- React 18
+- TypeScript
+- Vite
+- viem
+- MetaMask wallet integration
+
+**Verification:**
+- Etherscan ✅
+- Blockscout ✅
+- Sourcify ✅
+
+---
+
+## 📂 Project Structure
+
+```
+BlockVote/
+├── contracts/
+│   └── BlockVote.sol                    # The smart contract
+│
+├── test/
+│   └── BlockVote.test.ts                # 22 passing tests
+│
+├── scripts/
+│   ├── read-state.ts                    # Read election state
+│   ├── setup-election.ts                # Seed candidates + voters
+│   ├── run-election.ts                  # Full lifecycle simulation
+│   ├── export-abi.ts                    # Copy ABI to frontend
+│   ├── redeploy-sepolia.ts              # Full redeploy + vote
+│   └── ...
+│
+├── ignition/
+│   └── modules/
+│       └── BlockVote.ts                 # Ignition deployment module
+│
+├── frontend/                            # React DApp
+│   ├── src/
+│   │   ├── App.tsx                      # Main UI with tabs
+│   │   ├── components/
+│   │   │   ├── CandidateCard.tsx
+│   │   │   └── AdminPanel.tsx
+│   │   └── lib/
+│   │       ├── contract.ts              # Address + ABI
+│   │       ├── wallet.ts                # MetaMask connection
+│   │       └── blockvote.ts             # Chain read/write helpers
+│   └── package.json
+│
+└── hardhat.config.ts
+```
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+
+- **Node.js** 18+ (v22 recommended)
+- **MetaMask** browser extension
+- **Git**
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/mxolisi78/BlockVote.git
+cd BlockVote
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Run the test suite
+
+```bash
 npx hardhat test
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
+Expected output:
 
-```shell
-npx hardhat test solidity
-npx hardhat test nodejs
+```
+22 passing (22 nodejs)
 ```
 
-### Make a deployment to Sepolia
+### 4. Start a local blockchain (optional)
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+```bash
+npx hardhat node
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+### 5. Deploy locally (optional)
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+```bash
+npx hardhat ignition deploy ignition/modules/BlockVote.ts --network localhost
 ```
 
-After setting the variable, you can run the deployment with the Sepolia network:
+### 6. Run the frontend
 
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
+```bash
+cd frontend
+npm install
+npm run dev
 ```
+
+Open `http://localhost:5173/`
+
+---
+
+## 🧪 Test Suite
+
+The contract is tested with **22 passing tests** covering:
+
+```
+Deployment
+  ✔ should set the deployer as admin
+  ✔ should set the election name
+
+Candidates
+  ✔ should allow admin to add a candidate
+  ✔ should allow multiple candidates
+  ✔ should prevent non-admin from adding a candidate
+  ✔ should prevent adding candidates after election starts
+
+Voter Registration
+  ✔ should allow admin to register a voter
+  ✔ should reject duplicate voter registration
+  ✔ should prevent non-admin from registering a voter
+
+Election
+  ✔ should start the election
+  ✔ should not start without candidates
+  ✔ should prevent non-admin from starting the election
+
+Voting
+  ✔ should allow a registered voter to vote
+  ✔ should increase total votes after voting
+  ✔ should prevent a voter from voting twice
+  ✔ should reject an unregistered voter
+  ✔ should reject an invalid candidate
+
+Ending Election
+  ✔ should prevent voting after election ends
+  ✔ should prevent non-admin from ending the election
+  ✔ should prevent ending the election before it starts
+  ✔ should prevent starting the election twice
+  ✔ should prevent ending the election twice
+```
+
+Run them with:
+
+```bash
+npx hardhat test
+```
+
+---
+
+## 📊 Live Deployment (Sepolia)
+
+The contract is deployed and verified on Sepolia:
+
+| | |
+|---|---|
+| **Contract** | [`0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7`](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7) |
+| **Election Name** | Student Council Election 2026 |
+| **Candidates** | Alice Johnson, Bob Smith, Carol White |
+| **Status** | LIVE |
+| **Total Votes** | 1 |
+
+Try it yourself on Etherscan:
+
+1. Open the [Read Contract page](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7#readContract)
+2. Click **`electionName`** → returns `"Student Council Election 2026"`
+3. Click **`candidateCount`** → returns `3`
+4. Click **`totalVotes`** → returns `1`
+5. Call **`getVoterStatus`** with the admin address → returns `{ registered: true, hasVoted: true }`
+
+**All data comes from the Ethereum blockchain — no server involved.**
+
+---
+
+## 🖼️ Screenshots
+
+*(Add screenshots here after taking them)*
+
+- `frontend-vote.png` — Voting UI with Alice showing 1 vote
+- `frontend-admin.png` — Admin dashboard with candidates list
+- `etherscan-contract.png` — Verified contract on Etherscan
+
+---
+
+## 🛣️ Roadmap
+
+- [x] Write Solidity smart contract
+- [x] Build 22-test suite
+- [x] Deploy to local Hardhat node
+- [x] Build React frontend with MetaMask
+- [x] Deploy to Sepolia testnet
+- [x] Verify contract on Etherscan
+- [x] Cast a real on-chain vote
+- [ ] Deploy frontend to Vercel
+- [ ] Add screenshot gallery to README
+- [ ] (Future) Implement zk-proof based anonymous voting
+- [ ] (Future) Add candidate self-registration with stake
+
+---
+
+## 📜 License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+## 👤 Author
+
+**Mxolisi**
+- GitHub: [@mxolisi78](https://github.com/mxolisi78)
+
+---
+
+## ⚠️ Disclaimer
+
+This is an **educational project** demonstrating blockchain voting concepts. It is **not** production-ready for real-world elections. Real election systems require voter identity verification, coercion resistance, accessibility, privacy guarantees, and legal compliance — none of which this project addresses.
+
+The contract is deployed on **Sepolia testnet** where ETH has no real-world value.

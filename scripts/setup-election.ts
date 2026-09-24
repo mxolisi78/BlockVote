@@ -1,6 +1,6 @@
 import hre from "hardhat";
 
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = "0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7";
 
 // Account #1 — the MetaMask voter
 const VOTER1_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";

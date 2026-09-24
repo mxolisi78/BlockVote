@@ -1,0 +1,1 @@
+module.exports = ["Student Council Election 2026"];
