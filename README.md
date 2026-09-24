@@ -6,6 +6,20 @@ A decentralized voting application built on Ethereum. Votes are recorded as immu
 
 **Live on Sepolia Testnet** · **Verified on Etherscan** · **React + Solidity + Hardhat**
 
+### 🗳️ BlockVote — Blockchain Voting DApp
+
+A decentralized voting application built on Ethereum Sepolia. 
+Votes are recorded as immutable on-chain transactions, election 
+rules are enforced by a Solidity smart contract, and results 
+are publicly verifiable via Etherscan.
+
+**Stack:** Solidity · Hardhat · React · TypeScript · viem · MetaMask
+
+**Links:**
+- 🌐 [Live Demo](https://block-vote-lovat.vercel.app)
+- 📂 [Source Code](https://github.com/mxolisi78/BlockVote)
+- 📜 [Verified Contract](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7)
+
 ---
 
 ## 🔗 Quick Links
