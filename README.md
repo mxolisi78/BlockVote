@@ -256,11 +256,11 @@ Try it yourself on Etherscan:
 
 ## 🖼️ Screenshots
 
-*(Add screenshots here after taking them)*
+### 🗳️ Voting UI (Live on Sepolia)
+![Voting UI](docs/frontend-vote.png)
 
-- `frontend-vote.png` — Voting UI with Alice showing 1 vote
-- `frontend-admin.png` — Admin dashboard with candidates list
-- `etherscan-contract.png` — Verified contract on Etherscan
+### 🛠️ Admin Dashboard
+![Admin Dashboard](docs/frontend-admin.png)
 
 ---
 
