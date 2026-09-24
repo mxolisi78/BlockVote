@@ -2,8 +2,20 @@
 
 A decentralized voting application built on Ethereum. Votes are recorded as immutable transactions on the blockchain, election rules are enforced by a smart contract, and results are publicly auditable.
 
-**🌐 Live on Sepolia Testnet** · **📜 Verified on Etherscan** · **⚛️ React + Solidity**
+### 🌐 [**Try the Live DApp →**](https://block-vote-lovat.vercel.app)
 
+**Live on Sepolia Testnet** · **Verified on Etherscan** · **React + Solidity + Hardhat**
+
+---
+
+## 🔗 Quick Links
+
+| | |
+|---|---|
+| 🌐 **Live DApp** | [block-vote-lovat.vercel.app](https://block-vote-lovat.vercel.app) |
+| 📂 **GitHub** | [github.com/mxolisi78/BlockVote](https://github.com/mxolisi78/BlockVote) |
+| 📜 **Verified Contract** | [0x101b9a96... on Etherscan](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7) |
+| 🔗 **Read Contract** | [Etherscan Read tab](https://sepolia.etherscan.io/address/0x101b9a965c7a3de05f74b58ce3b3bc83c8c99ba7#readContract) |
 ---
 
 ## 📌 Contract Information
