@@ -287,8 +287,8 @@ Try it yourself on Etherscan:
 - [x] Deploy to Sepolia testnet
 - [x] Verify contract on Etherscan
 - [x] Cast a real on-chain vote
-- [ ] Deploy frontend to Vercel
-- [ ] Add screenshot gallery to README
+- [x] Deploy frontend to Vercel
+- [x] Add screenshot gallery to README
 - [ ] (Future) Implement zk-proof based anonymous voting
 - [ ] (Future) Add candidate self-registration with stake
 
